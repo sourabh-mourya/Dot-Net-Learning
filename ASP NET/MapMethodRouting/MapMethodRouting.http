@@ -1,0 +1,6 @@
+@MapMethodRouting_HostAddress = http://localhost:5224
+
+GET {{MapMethodRouting_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
