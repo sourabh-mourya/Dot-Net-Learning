@@ -1,0 +1,239 @@
+@{
+    ViewData["Title"] = "Product Calculator";
+
+    var products = new[]
+    {
+        new { Id = 1, Name = "Laptop", Category = "Electronics", Price = 55000m, Quantity = 1, Color = "#dbeafe", Icon = "💻" },
+        new { Id = 2, Name = "Wireless Mouse", Category = "Accessories", Price = 1200m, Quantity = 2, Color = "#dcfce7", Icon =
+"🖱️" },
+        new { Id = 3, Name = "Mechanical Keyboard", Category = "Accessories", Price = 3500m, Quantity = 1, Color = "#f3e8ff",
+Icon = "⌨️" }
+    };
+
+    var subtotal = products.Sum(p => p.Price * p.Quantity);
+    var discount = subtotal * 0.10m;
+    var grandTotal = subtotal - discount;
+    Layout = "~/Views/Shared/_Layout.cshtml";//Layout.cshtml file de di jo hr ui shared krta hi ...
+
+}
+
+<style>
+    body {
+        background: #f4f7fb;
+        font-family: Arial, sans-serif;
+    }
+
+    .calculator {
+        max-width: 1000px;
+        margin: 35px auto;
+        padding: 25px;
+    }
+
+    .heading {
+        color: #172554;
+        margin-bottom: 8px;
+    }
+
+    .subtitle {
+        color: #64748b;
+        margin-bottom: 28px;
+    }
+
+    .product-list {
+        display: grid;
+        gap: 16px;
+    }
+
+    .product {
+        display: grid;
+        grid-template-columns: 75px 2fr 1fr 1fr;
+        align-items: center;
+        gap: 18px;
+        background: white;
+        padding: 20px;
+        border-radius: 14px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 12px #0f172a08;
+    }
+
+    .product-icon {
+        width: 65px;
+        height: 65px;
+        border-radius: 12px;
+        display: grid;
+        place-items: center;
+        font-size: 30px;
+    }
+
+    .product-name {
+        color: #1e293b;
+        font-size: 17px;
+        font-weight: bold;
+        margin: 0 0 7px;
+    }
+
+    .category {
+        color: #64748b;
+        font-size: 13px;
+    }
+
+    .quantity {
+        background: #eff6ff;
+        color: #1d4ed8;
+        padding: 8px 12px;
+        border-radius: 8px;
+        display: inline-block;
+        font-weight: bold;
+    }
+
+    .price {
+        color: #0f766e;
+        font-size: 17px;
+        font-weight: bold;
+        text-align: right;
+    }
+
+    .summary {
+        max-width: 420px;
+        margin: 25px 0 0 auto;
+        background: white;
+        border-radius: 16px;
+        padding: 24px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 8px 24px #0f172a0a;
+    }
+
+    .summary h2 {
+        margin-top: 0;
+        color: #172554;
+    }
+
+    .summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin: 17px 0;
+        color: #475569;
+    }
+
+    .discount {
+        color: #16a34a;
+        font-weight: bold;
+    }
+
+    .total {
+        border-top: 1px solid #e2e8f0;
+        padding-top: 18px;
+        font-size: 21px;
+        font-weight: bold;
+        color: #4338ca;
+    }
+
+    .badge {
+        background: #dcfce7;
+        color: #15803d;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+    }
+
+    @@media (max-width: 650px) {
+        .calculator {
+            padding: 12px;
+        }
+
+        .product {
+            grid-template-columns: 60px 1fr;
+            gap: 12px;
+        }
+
+        .product-icon {
+            width: 55px;
+            height: 55px;
+        }
+
+        .product-price,
+        .product-quantity {
+            grid-column: 2;
+            text-align: left;
+        }
+
+        .price {
+            text-align: left;
+        }
+    }
+</style>
+
+<div class="calculator">
+    <h1 class="heading">🛍️ Product Calculator</h1>
+    <p class="subtitle">
+        Review your products and calculate your total amount.
+    </p>
+
+    <div style="margin-bottom: 20px;">
+        <span class="badge">3 Products Available</span>
+    </div>
+
+    <div class="product-list">
+        @foreach (var product in products)
+        {
+            <div class="product">
+                <div class="product-icon" style="background-color: @product.Color">
+                    @product.Icon
+                </div>
+
+                <div>
+                    <p class="product-name">@product.Name</p>
+                    <span class="category">@product.Category</span>
+                    <div class="category" style="margin-top: 8px;">
+                        Unit Price: ₹@product.Price.ToString("N2")
+                    </div>
+                </div>
+
+                <div class="product-quantity">
+                    <span class="quantity">
+                        Qty: @product.Quantity
+                    </span>
+                </div>
+
+                <div class="product-price">
+                    <div class="price">
+                        ₹@((product.Price * product.Quantity).ToString("N2"))
+                    </div>
+                    <div class="category" style="text-align: right; margin-top: 6px;">
+                        Item Total
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="summary">
+        <h2>Order Summary</h2>
+
+        <div class="summary-row">
+            <span>Subtotal</span>
+            <strong>₹@subtotal.ToString("N2")</strong>
+        </div>
+
+        <div class="summary-row">
+            <span>Discount (10%)</span>
+            <span class="discount">
+                - ₹@discount.ToString("N2")
+            </span>
+        </div>
+
+        <div class="summary-row">
+            <span>Products</span>
+            <strong>@products.Sum(p => p.Quantity) items</strong>
+        </div>
+
+        <div class="summary-row total">
+            <span>Grand Total</span>
+            <span>₹@grandTotal.ToString("N2")</span>
+        </div>
+
+        <p style="color: #64748b; font-size: 12px; margin-bottom: 0;">
+            * Discount is calculated on the subtotal.
+        </p>
+    </div>
+</div>

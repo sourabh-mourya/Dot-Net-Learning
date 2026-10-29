@@ -1,0 +1,27 @@
+
+@{
+    ViewData["Title"] = "Home";
+    var name = "Sourabh";
+    var age = 21;
+    Layout = "~/Views/Shared/_Layout.cshtml";//Layout.cshtml file de di jo hr ui shared krta hi ...
+}
+
+<h1>Welcome, @name!</h1>
+
+<p>Age: @age</p>
+
+@if (age >= 18)
+{
+    <p>You are an adult.</p>
+}
+else
+{
+    <p>You are a minor.</p>
+}
+
+<ul>
+    @foreach (var item in new[] { "C#", "ASP.NET Core", "Razor" })
+    {
+        <li>@item</li>
+    }
+</ul>

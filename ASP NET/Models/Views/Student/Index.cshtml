@@ -1,0 +1,29 @@
+﻿
+@using ModelsInASPCore.Models
+
+@{
+    ViewData["Title"] = "Home Page";
+    var students = ViewData["myStudentData"] as List<studentModel>;
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Student Controller Index Action Method is called.</p>
+</div>
+
+@if (students != null && students.Count > 0)
+{
+    foreach (var item in students)
+    {
+        <div class="card p-3 mb-3">
+            <h2>Name: @item.Name</h2>
+            <p>Gender: @item.Gender</p>
+            <p>Roll No: @item.rollNo</p>
+            <p>Standard: @item.Standard</p>
+        </div>
+    }
+}
+else
+{
+    <p class="text-center">No students found.</p>
+}

@@ -1,0 +1,19 @@
+@{
+    ViewData["Title"] = "Product Calculator";
+
+    Layout = "~/Views/Shared/_Layout.cshtml";//Layout.cshtml file de di jo hr ui shared krta hi ...
+
+}
+
+
+@ViewBag.data1
+<br />
+@ViewBag.data2
+<br />
+
+@{
+    foreach (var item in ViewBag.data3)
+    {
+        @item
+    }
+}
