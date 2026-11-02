@@ -1,0 +1,19 @@
+﻿@model List<Student>
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>These is Index Method of Home controller</p>
+</div>
+
+
+@{
+    foreach (var item in Model)
+    {
+        <h1>@item.Id</h1>
+        <h1>@item.Name</h1>
+        <h1>@item.Gender</h1>
+    }
+}

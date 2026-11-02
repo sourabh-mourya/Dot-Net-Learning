@@ -1,0 +1,22 @@
+//apne konse model ke saath bind krwana chahte hi iss view ko wo likh dege
+@model Employee//ab ye strongly typed view ban gya hi kyuki apne ne employee model ke saath bind kr diya hi ..
+
+
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>These is index view of employee controller</p>
+</div>
+
+
+//ab mene jo object bheja hi view se usko kiss trh se access krunga..ab
+<h2>@Model.EmpId</h2>
+<h2>@Model.EmpName</h2>
+<h2>@Model.Designation</h2>
+<h2>@Model.Salary</h2>
+
+//abhi to me yaha pr single object pass kr rha hu agar list of object pass krne ho to ...
+
