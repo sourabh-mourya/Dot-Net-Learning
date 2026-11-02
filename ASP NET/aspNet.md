@@ -3873,5 +3873,11 @@ public class StudentController : ControllerBase
 
 ---
 
-
 ## -----------------------------------------------------------------------------------
+
+## Entity Core Framwork - alg se md file proper tarike se explain kiya hi 
+>Code first approach 
+>Database first approach
+
+Creating CRUD Application using Code First Approach in ASP.NET Core 6
+
