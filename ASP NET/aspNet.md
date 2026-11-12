@@ -3875,9 +3875,1093 @@ public class StudentController : ControllerBase
 
 ## -----------------------------------------------------------------------------------
 
-## Entity Core Framwork - alg se md file proper tarike se explain kiya hi 
->Code first approach 
->Database first approach
+## Entity Core Framwork - alg se md file proper tarike se explain kiya hi
+
+> Code first approach
+> Database first approach
 
 Creating CRUD Application using Code First Approach in ASP.NET Core 6
+Creating CRUD Application using Database First Approach in ASP.NET Core 6
 
+## -------------------------------------------------------------------------
+
+# Session in ASP.NET Core (MVC) — Complete Notes
+
+> Ye notes tumhare original notes ka properly explained version hain. Koi point miss nahi kiya, bas structure, examples aur interview angle add kiya hai.
+
+---
+
+## 1. Problem kya hai? (Session ki zarurat kyun)
+
+ASP.NET Core MVC me data ek action se dusre action/view tak bhejne ke kai tarike hain: **ViewBag, ViewData, TempData**.
+
+| Technique              | Data kab tak rehta hai                                                                                                                                                               |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `ViewBag` / `ViewData` | Sirf **current request** (Controller → View). Redirect hote hi gaya.                                                                                                                 |
+| `TempData`             | Next request tak (ek redirect), **read hote hi delete** ho jata hai. Dobara chahiye to `TempData.Keep()` / `Peek()` use karna padta hai, yaani baar baar action me bhejna padta hai. |
+| **Session**            | Multiple requests, multiple actions, multiple views — jab tak session **expire ya remove** na ho.                                                                                    |
+
+**Simple analogy:**
+
+- `ViewBag` = chit jo sirf tumhare haath se view ke haath me gayi, phir phek di.
+- `TempData` = chit jo ek baar padhne ke baad automatically fat jati hai.
+- `Session` = locker jisme tum data rakh do, aur kisi bhi action se key se nikal lo.
+
+**Rule of thumb:** Agar same data **kai action methods me chahiye** → Session.
+
+---
+
+## 2. Session kya hai? (Definition — interview ke liye)
+
+- Session ek **State Management technique** hai.
+- **Session State** = ASP.NET Core ka scenario jisme user ke web app browse karte waqt uska data store hota hai.
+- Ye app ke maintain kiye hue **store** me data persist karta hai, **ek hi client ke multiple requests ke across**.
+- HTTP **stateless** hai (har request independent). Session is stateless nature ka workaround hai.
+
+### Session ki important properties
+
+1. **Server-side** hai — actual data server pe rehta hai. Browser ko sirf ek **session cookie (Session ID)** milti hai.
+2. **Browser-specific** hai — Chrome me bana session Firefox me nahi milega, chahe URL copy kar lo. Kyunki cookie alag hai.
+3. **Every user ka alag session** — 100 users app use kar rahe hain to 100 alag sessions, har ek ka **unique Session ID**.
+4. **Ephemeral data** hai — matlab temporary; kuch time baad automatically delete (default **20 minutes idle**).
+5. **Browser close = session cookie delete** (default behaviour), isse naya session banega jab tak tum dobara create na karo.
+6. TempData ke unlike, session apni **expiration time tak persist** karta hai.
+7. Session ka data **cache** (by default in-memory) me hota hai.
+
+### Kya store karein, kya nahi?
+
+- **Critical / permanent data** (orders, payments, user profile) → **Database** me.
+- **Frequently used, multiple actions/views me chahiye wala data** (UserId, role, cart ids, display name) → **Session me cache** karke rakho (performance optimization).
+
+---
+
+## 3. Session implement karne ke Steps
+
+### Step 1 — `Program.cs` me setup
+
+```csharp
+// Build se PEHLE: service register
+builder.Services.AddSession();
+
+var app = builder.Build();
+
+// Build ke BAAD: middleware pipeline me add
+app.UseSession();
+```
+
+> **Order matters:** `UseSession()` ko `UseRouting()` ke baad aur `MapControllerRoute()` / endpoints se **pehle** rakho, warna controller me `HttpContext.Session` kaam nahi karega (exception aayega).
+
+### Step 2 — Session variable create karna (Set)
+
+Pehle namespace import:
+
+```csharp
+using Microsoft.AspNetCore.Http;
+```
+
+Session set karne ka syntax:
+
+```csharp
+HttpContext.Session.SetString("MyKey", "ProgramMentor");
+//                             ^key      ^value
+```
+
+Controller me example:
+
+```csharp
+public IActionResult Privacy()
+{
+    // Privacy action chalega to ye session ban jayega.
+    // Isko baad me KEY ki help se kisi bhi action me access kar sakte hain.
+    HttpContext.Session.SetString("MyKey", "ProgramMentor");
+
+    return View();
+}
+```
+
+> Notes me bola tha ki abhi session controller ke andar bana rahe hain, production me kaha banate hain wo baad me dekhna. **Production practice:** session ki keys ko ek `static class SessionKeys` me constants bana ke rakho (typos se bachne ke liye), aur session set karne ka kaam usually **Login action / service layer** me hota hai.
+
+### Step 3 — Session variable access karna (Get)
+
+```csharp
+HttpContext.Session.GetString("MyKey");
+```
+
+Dusre action me use:
+
+```csharp
+public IActionResult About()
+{
+    // Pehle null check — session expire ho gaya ho to GetString null deta hai
+    if (HttpContext.Session.GetString("MyKey") != null)
+    {
+        ViewBag.Data = HttpContext.Session.GetString("MyKey").ToString();
+    }
+
+    return View();
+}
+```
+
+View me dikhana:
+
+```html
+<h3>@ViewBag.Data</h3>
+```
+
+**Flow samjho:**
+
+1. User pehle `Privacy` action chalata hai → session **create** hota hai.
+2. Phir `About` action chalata hai → wahan session se data **nikal ke ViewBag me daal** diya → view me dikh gaya.
+3. Ye same code kitne bhi action methods me use kar sakte ho. Session **across multiple actions** mil jata hai.
+
+> Session khud se destroy karna padta hai (Remove method se), ya fir idle timeout / browser close pe ho jata hai.
+
+---
+
+## 4. Session ko directly View me access karna (Step 4)
+
+Agar action method ke bina **seedha view me** session padhna hai to `IHttpContextAccessor` chahiye.
+
+### 4.1 `Program.cs` me register karo
+
+```csharp
+builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+
+// Ya shortcut (recommended):
+// builder.Services.AddHttpContextAccessor();
+```
+
+### 4.2 View me import + inject
+
+```html
+@using Microsoft.AspNetCore.Http @inject
+Microsoft.AspNetCore.Http.IHttpContextAccessor accessor
+<!-- accessor ki help se session ko view ke andar directly access karenge -->
+
+<h3>@accessor.HttpContext.Session.GetString("MyKey")</h3>
+```
+
+### Dono tarike ka summary
+
+| Tarika         | Kaise                                                                              |
+| -------------- | ---------------------------------------------------------------------------------- |
+| Via Action     | Action me `GetString` → `ViewBag` me daalo → view me `@ViewBag.Data`               |
+| Direct in View | `IHttpContextAccessor` inject → `@accessor.HttpContext.Session.GetString("MyKey")` |
+
+Dono tarike view me use kar sakte hain.
+
+> **Best practice:** Direct view access chhote cases me theek hai (jaise navbar me user ka naam). Business logic hamesha controller/service me rakho.
+
+---
+
+## 5. Session ko Destroy kaise karein
+
+### Remove method
+
+```csharp
+public IActionResult Logout()
+{
+    if (HttpContext.Session.GetString("MyKey") != null)
+    {
+        HttpContext.Session.Remove("MyKey");   // sirf wo key delete hogi
+    }
+    return View();
+}
+```
+
+Jaise hi user `Logout` action pe aata hai, `Remove` chalta hai aur **us key ka session data destroy** ho jata hai.
+
+### Destroy hone ke saare tarike
+
+| Tarika                              | Kya hota hai                                                           |
+| ----------------------------------- | ---------------------------------------------------------------------- |
+| `HttpContext.Session.Remove("key")` | Ek specific key delete                                                 |
+| `HttpContext.Session.Clear()`       | Us user ke **saare** session keys delete (logout me ye zyada safe hai) |
+| Idle timeout (default 20 min)       | Automatically expire                                                   |
+| Browser band karna                  | Session cookie delete → purana session nahi milega                     |
+
+> **Logout me `Clear()` use karna better hai**, kyunki `Remove` sirf ek key hataata hai, baaki data (jaise role, userId) reh sakta hai.
+
+---
+
+## 6. Session ka Timeout change karna
+
+Default: **20 minutes** (idle). Kam ya zyada karne ke liye `Program.cs`:
+
+```csharp
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(10); // yaha 20 se 10 min kar diya
+});
+```
+
+**Idle timeout ka matlab:** Jab tak user har request bhejta rehta hai, timer reset hota rehta hai. Agar 10 min tak **koi request nahi aayi**, tab session expire.
+
+### Production-style full config
+
+```csharp
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(20);
+    options.Cookie.HttpOnly = true;      // JavaScript cookie read nahi kar sakti (XSS se bachav)
+    options.Cookie.IsEssential = true;   // GDPR/cookie-consent ke bina bhi cookie bheji jayegi
+});
+```
+
+| Option                      | Kaam                                                                                                       |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `IdleTimeout`               | Kitne idle time ke baad session expire                                                                     |
+| `Cookie.HttpOnly = true`    | JS se session cookie access block (security)                                                               |
+| `Cookie.IsEssential = true` | Consent policy ke bina bhi cookie allowed. Warna cookie consent enable hone pe session kaam hi nahi karega |
+
+---
+
+## 7. Session me multiple data types
+
+Notes me bola tha "multiple type ka data store kar sakte hain". Exact baat:
+
+```csharp
+// String
+HttpContext.Session.SetString("Name", "Sourabh");
+string name = HttpContext.Session.GetString("Name");
+
+// Int
+HttpContext.Session.SetInt32("UserId", 101);
+int? userId = HttpContext.Session.GetInt32("UserId");
+```
+
+> Session natively sirf **string, int, byte[]** support karta hai. **Object / List** store karna ho to **JSON serialize** karke string me daalo:
+
+```csharp
+using System.Text.Json;
+
+// Set
+var user = new { Id = 1, Name = "Sourabh", Role = "Admin" };
+HttpContext.Session.SetString("User", JsonSerializer.Serialize(user));
+
+// Get
+var json = HttpContext.Session.GetString("User");
+var obj = json == null ? null : JsonSerializer.Deserialize<UserDto>(json);
+```
+
+---
+
+## 8. Project: Login with Database + Session + Logout (ASP.NET Core 6)
+
+### Phases
+
+1. ASP.NET Core app me **Session setup**
+2. **Database First Approach** implement (Code First bhi use kar sakte the)
+3. **Login & Logout** task
+
+### Phase 1 — Session setup
+
+```csharp
+builder.Services.AddSession();
+// ...
+app.UseSession();
+```
+
+Ye dono lines se session register ho gaya.
+
+### Phase 2 — Database First Approach
+
+1. **3 NuGet packages install** karo:
+   - `Microsoft.EntityFrameworkCore.SqlServer` (ya jo DB use kar rahe ho, e.g. MySQL ke liye Pomelo)
+   - `Microsoft.EntityFrameworkCore.Tools`
+   - `Microsoft.EntityFrameworkCore.Design`
+2. **Scaffold command** run karo (existing DB se models + DbContext ban jata hai):
+
+```powershell
+Scaffold-DbContext "Server=.;Database=MyDb;Trusted_Connection=True;TrustServerCertificate=True" Microsoft.EntityFrameworkCore.SqlServer -OutputDir Models
+```
+
+3. **Connection string ko `DbContext` class se hata ke `appsettings.json` me move** karo (hardcoded connection string security + flexibility ke liye bura hai):
+
+```json
+"ConnectionStrings": {
+  "DefaultConnection": "Server=.;Database=MyDb;Trusted_Connection=True;TrustServerCertificate=True"
+}
+```
+
+```csharp
+builder.Services.AddDbContext<MyDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+```
+
+### Phase 3 — Login & Logout
+
+**Plan:** Login action me DB se user verify karo, sahi hai to session variable create karo. Baki pages me us session ko access karke check karo user logged in hai ya nahi. Logout me session clear.
+
+```csharp
+[HttpPost]
+public IActionResult Login(string email, string password)
+{
+    // DB me user dhundo
+    var user = _context.Users.FirstOrDefault(u => u.Email == email);
+
+    // NOTE: production me password HASH compare karo (BCrypt), plain text kabhi nahi
+    if (user != null && BCrypt.Net.BCrypt.Verify(password, user.PasswordHash))
+    {
+        // Login success -> session variables create
+        HttpContext.Session.SetInt32("UserId", user.Id);
+        HttpContext.Session.SetString("UserName", user.Name);
+        return RedirectToAction("Dashboard");
+    }
+
+    ViewBag.Error = "Invalid email or password";
+    return View();
+}
+
+public IActionResult Dashboard()
+{
+    // Protected page: session nahi hai to login pe bhejo
+    if (HttpContext.Session.GetInt32("UserId") == null)
+        return RedirectToAction("Login");
+
+    ViewBag.Name = HttpContext.Session.GetString("UserName");
+    return View();
+}
+
+public IActionResult Logout()
+{
+    HttpContext.Session.Clear();             // saara session data delete
+    return RedirectToAction("Login");
+}
+```
+
+> Notes me aage "ab Register karenge" likha tha — Register wala part next lecture/phase hai (new user DB me insert, password hash karke save).
+
+**Project analogy:** Jaise MediSetu me patient/doctor login karta hai aur alag-alag pages pe uski identity chahiye, waise yahan `UserId` session me rakh ke har action me check karte hain. Real projects me tum JWT + RBAC use karte ho; session usi ka **server-side, cookie-based** cousin hai.
+
+---
+
+## 9. Session vs TempData vs ViewBag vs ViewData (Quick Compare)
+
+| Feature          | ViewBag           | ViewData                  | TempData                          | Session                                 |
+| ---------------- | ----------------- | ------------------------- | --------------------------------- | --------------------------------------- |
+| Direction        | Controller → View | Controller → View         | Action → Action (redirect)        | Kahin bhi                               |
+| Lifetime         | Current request   | Current request           | Next request tak (read pe delete) | Idle timeout / logout tak               |
+| Type safety      | Dynamic           | Dictionary (cast chahiye) | Dictionary (cast chahiye)         | Typed helpers (`GetString`, `GetInt32`) |
+| Storage          | —                 | —                         | Cookie / Session                  | Server-side store (cache)               |
+| Redirect survive | No                | No                        | Yes (once)                        | Yes (multiple)                          |
+
+---
+
+## 10. Important Cautions / Production Notes
+
+1. **Default session store = in-memory** (`IDistributedMemoryCache`). Server restart ya multiple servers (load balancer, AWS ALB ke peeche multiple EC2) pe session **lost / inconsistent** ho sakta hai. Production me **Redis distributed cache** use karo:
+   ```csharp
+   builder.Services.AddStackExchangeRedisCache(o => o.Configuration = "localhost:6379");
+   builder.Services.AddSession();
+   ```
+2. **Sensitive data** (password, card details) session me kabhi mat rakho.
+3. Session **memory consume** karta hai — bahut bada data mat dalo.
+4. Session ka data **sirf us user ka** hai; shared/global data ke liye `IMemoryCache` use karo.
+5. Real authentication ke liye **Cookie Authentication / Identity / JWT** better hai; session login ka simple demo/learning approach hai.
+
+# Bind Multiple Models with a Single View in ASP.NET Core (ViewModel)
+
+> Ye tumhare original notes ka properly explained version hai. Koi point miss nahi kiya. Jo cheezein notes me directly nahi thi (jaise `Student` / `Teacher` model classes, table headers, alternatives), unko maine add kiya hai aur "Added" mark kiya hai.
+
+---
+
+## 1. Problem kya hai?
+
+Ek normal MVC view me hum **ek hi model** bind karte hain:
+
+```html
+@model Student
+```
+
+Ye approach tab tak chalti hai jab view ko **sirf ek model** ka data dikhana ho.
+
+**Problem:** Agar ek hi page pe **do (ya zyada) alag models** ka data dikhana ho, jaise **Students ki list + Teachers ki list**, to?
+
+Ek view me `@model` directive **sirf ek baar** likh sakte ho. Matlab:
+
+```html
+@model Student @model Teacher // ERROR: ek view me do @model nahi chalega
+```
+
+Isliye "single view + single model" wali approach yaha kaam nahi karti. Iske liye alag approach chahiye: **ViewModel**.
+
+---
+
+## 2. Solution: ViewModel
+
+**Idea:**
+
+1. Ek **3rd model class** banao.
+2. Us class me **Model1 aur Model2 ki properties** register karo (yaha: Student list + Teacher list).
+3. Is 3rd class ko hi bolte hain **ViewModel**.
+4. Controller me is ViewModel ka object banao, data bharo, aur `View(viewModel)` se view ko pass karo.
+5. View me **sirf ye ek ViewModel** `@model` ke through bind hota hai.
+
+**Definition (interview ke liye):**
+
+> ViewModel ek aisi class hoti hai jo **ek ya zyada models (ya alag-alag data)** ko combine karke view ko ek hi object me deti hai. Ye specifically view ki zarurat ke hisaab se design hoti hai.
+
+**Analogy (tumhare project se):**
+MediSetu me ek **Patient Dashboard** socho jisme ek hi page pe **Appointments ki list + Prescriptions ki list + Lab Reports ki list** dikhani hai. Teeno alag models/tables hain, lekin page ek hai. To tum ek `PatientDashboardViewModel` banate ho jisme teeno lists hoti hain, aur wahi ek object view ko dete ho. Bilkul yahi concept Student + Teacher ke saath hai.
+
+---
+
+## 3. Step by Step Implementation
+
+### Step 1: Individual Models (Added: notes me nahi tha, properties se infer kiya)
+
+Notes me jo data tha usse in models ki properties pata chalti hain:
+
+```csharp
+namespace Bind_Multiple_Models_With_Single_View.Models
+{
+    public class Student
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string Gender { get; set; }
+        public int Standard { get; set; }
+    }
+
+    public class Teacher
+    {
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string Email { get; set; }
+        public string Gender { get; set; }
+        public string Subject { get; set; }
+        public int Experience { get; set; }   // years me
+        public int Salary { get; set; }
+    }
+}
+```
+
+### Step 2: ViewModel class banao (3rd model)
+
+```csharp
+namespace Bind_Multiple_Models_With_Single_View.Models
+{
+    public class SchoolViewModel
+    {
+        public List<Student> myStudents { get; set; }
+        public List<Teacher> myTeachers { get; set; }
+    }
+}
+```
+
+**Samjho:**
+
+- Hum **list of data** dikhana chahte hain, isliye properties ka type `List<Student>` aur `List<Teacher>` rakha.
+- Agar sirf ek student/teacher dikhana hota to `Student` / `Teacher` (single object) rakhte.
+- Ye dono models ki properties ek class me **register / combine** ho gayi.
+
+> **Note (correction):** Notes ke last line me "List<Student> and List<Employee>" likha tha. Yaha **Employee nahi, Teacher** hona chahiye. Code me `List<Teacher>` hi hai, wo sahi hai.
+
+> **Naming convention:** C# me properties ke naam normally **PascalCase** me rakhte hain (`MyStudents`, `MyTeachers`). Notes me `myStudents` / `myTeachers` hai, wo bhi chalta hai, lekin professional code me PascalCase use karo.
+
+### Step 3: Controller Action me ViewModel bharo aur View ko pass karo
+
+```csharp
+public IActionResult Index()
+{
+    // 1) Student ka data (abhi dummy / hardcoded data hai; real project me DB se aayega)
+    List<Student> students = new List<Student>
+    {
+        new Student { Id = 1, Name = "Rahul Sharma", Gender = "Male",   Standard = 10 },
+        new Student { Id = 2, Name = "Priya Verma",  Gender = "Female", Standard = 12 },
+        new Student { Id = 3, Name = "Amit Kumar",   Gender = "Male",   Standard = 9  },
+        new Student { Id = 4, Name = "Sneha Patel",  Gender = "Female", Standard = 11 },
+        new Student { Id = 5, Name = "Rohit Singh",  Gender = "Male",   Standard = 8  },
+        new Student { Id = 6, Name = "Anjali Gupta", Gender = "Female", Standard = 10 },
+        new Student { Id = 7, Name = "Karan Joshi",  Gender = "Male",   Standard = 12 }
+    };
+
+    // 2) Teacher ka data
+    List<Teacher> teachers = new List<Teacher>
+    {
+        new Teacher { Id = 1, Name = "Amit Sharma",  Email = "amit@gmail.com",   Gender = "Male",   Subject = "Mathematics",      Experience = 8,  Salary = 55000 },
+        new Teacher { Id = 2, Name = "Priya Verma",  Email = "priya@gmail.com",  Gender = "Female", Subject = "Science",          Experience = 5,  Salary = 45000 },
+        new Teacher { Id = 3, Name = "Rahul Patel",  Email = "rahul@gmail.com",  Gender = "Male",   Subject = "English",          Experience = 10, Salary = 65000 },
+        new Teacher { Id = 4, Name = "Sneha Gupta",  Email = "sneha@gmail.com",  Gender = "Female", Subject = "Computer Science", Experience = 6,  Salary = 50000 },
+        new Teacher { Id = 5, Name = "Rohit Singh",  Email = "rohit@gmail.com",  Gender = "Male",   Subject = "Physics",          Experience = 12, Salary = 75000 },
+        new Teacher { Id = 6, Name = "Anjali Joshi", Email = "anjali@gmail.com", Gender = "Female", Subject = "Chemistry",        Experience = 4,  Salary = 40000 },
+        new Teacher { Id = 7, Name = "Karan Mehta",  Email = "karan@gmail.com",  Gender = "Male",   Subject = "Biology",          Experience = 7,  Salary = 52000 }
+    };
+
+    // 3) ViewModel ka object banao aur dono lists assign karo
+    SchoolViewModel svm = new SchoolViewModel()
+    {
+        myStudents = students,   // ViewModel ki property me student list pass kar di
+        myTeachers = teachers    // ViewModel ki property me teacher list pass kar di
+    };
+
+    // 4) Ek hi ViewModel object view ko bhej do
+    return View(svm);
+}
+```
+
+**Flow:**
+
+```
+Controller (Index)
+   |-- students list banayi
+   |-- teachers list banayi
+   |-- SchoolViewModel me dono daali
+   |-- return View(svm)
+          |
+          v
+View (Index.cshtml)  --> @model SchoolViewModel --> Model.myStudents / Model.myTeachers
+```
+
+### Step 4: View me ViewModel bind karo aur data dikhao
+
+```html
+@model SchoolViewModel
+```
+
+> **Important:** Notes ke hisaab se sirf `SchoolViewModel` tabhi likh sakte ho jab `Views/_ViewImports.cshtml` me ye namespace import ho:
+>
+> ```html
+> @using Bind_Multiple_Models_With_Single_View.Models
+> ```
+>
+> Agar ye import nahi hai to full name likhna padega:
+>
+> ```html
+> @model Bind_Multiple_Models_With_Single_View.Models.SchoolViewModel
+> ```
+
+#### Student ki table (Added: table structure, notes me sirf `foreach` tha)
+
+```html
+<h2>Students</h2>
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th>Id</th>
+      <th>Name</th>
+      <th>Gender</th>
+      <th>Standard</th>
+    </tr>
+  </thead>
+  <tbody>
+    @foreach (var item in Model.myStudents) {
+    <tr>
+      <td>@item.Id</td>
+      <td>@item.Name</td>
+      <td>@item.Gender</td>
+      <td>@item.Standard</td>
+    </tr>
+    }
+  </tbody>
+</table>
+```
+
+Is tarah hum **Student model ki properties** access kar lete hain, `Model.myStudents` ke through.
+
+#### Teacher ki table
+
+```html
+<h2>Teachers</h2>
+<table class="table table-bordered">
+  <thead>
+    <tr>
+      <th>Id</th>
+      <th>Name</th>
+      <th>Email</th>
+      <th>Gender</th>
+      <th>Subject</th>
+      <th>Experience</th>
+      <th>Salary</th>
+    </tr>
+  </thead>
+  <tbody>
+    @foreach (var item in Model.myTeachers) {
+    <tr>
+      <td>@item.Id</td>
+      <td>@item.Name</td>
+      <td>@item.Email</td>
+      <td>@item.Gender</td>
+      <td>@item.Subject</td>
+      <td>@item.Experience Years</td>
+      <td>@item.Salary</td>
+    </tr>
+    }
+  </tbody>
+</table>
+```
+
+Is tarah hum **Teacher model ki properties** access karte hain, `Model.myTeachers` ke through.
+
+> **Small tip:** `@item.Experience Years` me "Years" plain text hai, wo `Experience` ke baad display ho jayega (jaise "8 Years"). Agar kabhi confusion ho to `@item.Experience <text>Years</text>` ya `@(item.Experience) Years` use kar sakte ho.
+
+---
+
+## 4. Poora Concept Ek Nazar Me
+
+| Step | Kya karna hai                                               | Kahan            |
+| ---- | ----------------------------------------------------------- | ---------------- |
+| 1    | Individual models banao (`Student`, `Teacher`)              | `Models/`        |
+| 2    | ViewModel banao jisme dono ki lists ho (`SchoolViewModel`)  | `Models/`        |
+| 3    | Controller me data bharo, ViewModel me daalo, `View(svm)`   | `HomeController` |
+| 4    | View me `@model SchoolViewModel` likho                      | `Index.cshtml`   |
+| 5    | `Model.myStudents` / `Model.myTeachers` pe `foreach` chalao | `Index.cshtml`   |
+
+**Key line yaad rakho:**
+
+> Jitne models ek view me chahiye, un sabki properties **pehle ViewModel me register** karo. Phir **ek hi ViewModel** view ko do.
+
+---
+
+## 5. Kab List, Kab Single Object? (Notes ka last point)
+
+Notes me bola tha: "apne ko pta list of data rahega isliye `List<Student>` aur `List<Teacher>` banaya".
+
+| Situation                                      | ViewModel property type                    |
+| ---------------------------------------------- | ------------------------------------------ |
+| Multiple records dikhane hain (table)          | `List<Student>` / `IEnumerable<Student>`   |
+| Ek hi record dikhana hai (detail/profile page) | `Student`                                  |
+| Dono chahiye                                   | Dono properties ViewModel me rakh sakte ho |
+
+---
+
+## 6. Multiple Models ko Single View me dikhane ke Alternative Tarike (Added)
+
+Interview me aksar poochte hain "ViewModel ke alawa aur kya options hain?". Jawab:
+
+| Tarika                              | Kaise                                                      | Limitation                                                             |
+| ----------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------- |
+| **ViewModel** (recommended)         | Alag class me sab combine                                  | Ek extra class banani padti hai                                        |
+| **ViewBag / ViewData**              | Ek model `@model` me, doosra `ViewBag.Teachers = teachers` | Strongly-typed nahi, cast karna padta hai, errors runtime pe aate hain |
+| **Tuple**                           | `@model (List<Student>, List<Teacher>)`                    | Code padhne me kam readable, `Item1`, `Item2`                          |
+| **Partial Views / View Components** | Page ko chhote parts me todo, har part ka apna model       | Extra setup, bade pages ke liye achha                                  |
+
+**Kyun ViewModel best hai?**
+
+- **Strongly typed** (compile time pe errors pakde jaate hain)
+- Clean aur readable code
+- Alag-alag models ke saath-saath **extra view-specific data** (jaise page title, total count) bhi add kar sakte ho
+- Domain/DB models ko view ki zarurat se alag rakhta hai (separation of concerns)
+
+---
+
+## 7. ViewModel me Extra Data Bhi Daal Sakte Ho (Added)
+
+ViewModel sirf models ki lists tak limited nahi hai:
+
+```csharp
+public class SchoolViewModel
+{
+    public string SchoolName { get; set; }
+    public int TotalStudents { get; set; }
+    public List<Student> myStudents { get; set; }
+    public List<Teacher> myTeachers { get; set; }
+}
+```
+
+```csharp
+SchoolViewModel svm = new SchoolViewModel()
+{
+    SchoolName = "Medicaps Public School",
+    TotalStudents = students.Count,
+    myStudents = students,
+    myTeachers = teachers
+};
+```
+
+View me: `<h1>@Model.SchoolName</h1>` aur `<p>Total: @Model.TotalStudents</p>`
+
+---
+
+## 8. Real Project Me Kaise Hoga (DB se data)
+
+Abhi notes me data **hardcoded** hai (sirf demo ke liye). Real project me:
+
+```csharp
+public IActionResult Index()
+{
+    var svm = new SchoolViewModel
+    {
+        myStudents = _context.Students.ToList(),
+        myTeachers = _context.Teachers.ToList()
+    };
+    return View(svm);
+}
+```
+
+Yaha `_context` tumhara EF Core `DbContext` hai (jaise pichle Session wale notes me DB First approach me banaya tha).
+
+---
+
+## 9. Common Mistakes / Errors
+
+| Error                                                                            | Reason                                               | Fix                                                                                  |
+| -------------------------------------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `The type or namespace 'SchoolViewModel' could not be found`                     | `_ViewImports.cshtml` me namespace import nahi hai   | `@using ...Models` add karo ya full name likho                                       |
+| `NullReferenceException` on `Model.myStudents`                                   | ViewModel ki list initialize/assign nahi hui         | Controller me list assign karo, ya ViewModel me constructor me `new List<Student>()` |
+| `The model item passed into the ViewDataDictionary is of type X, but requires Y` | Controller se alag type bheja, view me alag `@model` | Dono jagah same ViewModel type rakho                                                 |
+| Do `@model` likhne pe error                                                      | Ek view me ek hi `@model` allowed                    | ViewModel use karo                                                                   |
+
+**Tip (null se bachne ke liye):**
+
+```csharp
+public class SchoolViewModel
+{
+    public List<Student> myStudents { get; set; } = new List<Student>();
+    public List<Teacher> myTeachers { get; set; } = new List<Teacher>();
+}
+```
+
+---
+
+## 10. Interview Questions (Quick Revision)
+
+**Q1. Ek view me multiple models kaise bind karte hain?**
+ViewModel banate hain, jisme saare models ki properties hoti hain, aur wahi ek ViewModel `@model` se view me bind karte hain.
+
+**Q2. ViewModel kya hota hai?**
+Ek class jo view ki zarurat ke hisaab se ek ya zyada models/data combine karke view ko deti hai.
+
+**Q3. Kya ek view me do `@model` directive likh sakte hain?**
+Nahi, ek view me sirf ek `@model` allowed hai.
+
+**Q4. ViewModel aur Domain Model (Entity) me kya difference hai?**
+Domain/Entity model DB table ko represent karta hai. ViewModel UI ki zarurat ke hisaab se banta hai, aur isme multiple entities ya extra fields ho sakte hain.
+
+**Q5. ViewModel ke alawa aur kaunse tarike hain?**
+ViewBag/ViewData, Tuple, Partial Views / View Components. Best practice ViewModel hai (strongly typed).
+
+**Q6. ViewBag se multiple models bhejne me kya problem hai?**
+Dynamic hai, type safety nahi, compile time error nahi milte, runtime pe fail hota hai.
+
+**Q7. `_ViewImports.cshtml` ka kya kaam hai?**
+Common `@using`, `@addTagHelper` directives ek jagah rakhta hai, taaki har view me baar baar likhna na pade.
+
+**Q8. ViewModel me kab List aur kab single object rakhte hain?**
+Multiple records (table) ke liye `List<T>`, ek record (detail page) ke liye single `T`.
+
+---
+
+## 11. One-Page Cheat Sheet
+
+```csharp
+// ---------- Models ----------
+public class SchoolViewModel
+{
+    public List<Student> myStudents { get; set; } = new();
+    public List<Teacher> myTeachers { get; set; } = new();
+}
+
+// ---------- Controller ----------
+public IActionResult Index()
+{
+    var svm = new SchoolViewModel
+    {
+        myStudents = students,
+        myTeachers = teachers
+    };
+    return View(svm);          // ek hi object
+}
+```
+
+```html
+<!-- ---------- View ---------- -->
+@model SchoolViewModel @foreach (var s in Model.myStudents) {
+<tr>
+  <td>@s.Name</td>
+</tr>
+} @foreach (var t in Model.myTeachers) {
+<tr>
+  <td>@t.Name</td>
+</tr>
+}
+```
+
+**Yaad rakhne wali line:**
+
+> **Multiple models + single view = ViewModel.** Ek 3rd class banao, usme sab models ki properties daalo, aur wahi ek ViewModel view ko do.
+
+## ----------------------------------------------------------
+
+## Partial View in ASP.NET Core 6 ....
+
+partial view jb bhi banayege apne to \_ se usss file ko save krke rkhege
+
+and usss file ko apne Shared folder ke ander create krke rkheeg
+
+Partial view ko apne kissi main view ko ke saath attach krna padega then apne usko used kr skte hi wrna yese partail view ko run hi nhi kr skte hi h...
+
+ek view ke ander apne multiple partail view ko add on kr skte hi ...
+
+jo common html ka markup hota hi usko used krne ke liye apne partial view ka used krte hi ...
+
+Partail view allow you to reuse common markups across the different view of the application..
+
+Partial view ko sperately run nhi kr skte hi apne ko usko kisssi ke nder to inject krke used krna padega.........
+
+apne isko
+
+<partial name = "_partialViewFileName"/>
+
+to ye automatic shared folder ke ander jyega ur partial View wli file ko run kr dega ...
+
+Partial View With Models(Strongly typed Partial View)
+
+me phele single products ko represent krne ke liye ek partail view bana rha hu...
+
+\_ProductsPartialView.cshtml
+ek layout bana dunga ur baaar baar saare project ko me display krwa dunga....
+
+View model ke saath bind rhega to isliye me isko bol rha hu strongly type viewed.
+
+Products.cshtml
+
+rhega iske
+
+ProductPartial ko call
+
+ek baar dusre product
+
+Partial View ek hi rhega bus data change hote rhega
+
+## ------------------------------------------------------------------------
+
+# Introduction To ASP.NET Core WebApi (RestFul APIs)
+
+1. Web API kya hota hai?
+
+Web API ek aisi service hai jo data return karti hai (HTML page nahi). Isse bahut saare clients interact kar sakte hain:
+
+Mobile apps (Android/iOS)
+Desktop apps
+Browsers (React, Angular, JS)
+IoT devices
+Doosre servers (server-to-server)
+
+Core idea: Ek baar API banao, har jagah use karo. Business logic aur database ek hi jagah rehta hai, aur sab clients usi se data lete hain.
+
+Mobile App ─┐
+Desktop App ─┤
+Browser ─┼──► Web API ──► Database
+IoT Device ─┤
+Other Server─┘ 2. Data Format: JSON vs XML
+
+Web API data usually in do formats me bhejta hai:
+
+Feature JSON XML
+Full form JavaScript Object Notation Extensible Markup Language
+Size Light weight Heavy (tags zyada)
+Readability Easy Thoda verbose
+Usage today Default (90%+) Legacy/enterprise systems
+
+JSON example:
+
+json
+{
+"id": 1,
+"name": "Sourabh",
+"city": "Indore"
+}
+
+XML example:
+
+xml
+<Student>
+<Id>1</Id>
+<Name>Sourabh</Name>
+<City>Indore</City>
+</Student>
+
+ASP.NET Core me default JSON hi hota hai. XML chahiye to formatter add karna padta hai.
+
+3. HTTP Protocol aur HTTP Verbs
+
+Client ko data tabhi milega jab wo HTTP rules follow kare. Un rules ke andar HTTP Verbs (Methods) aate hain:
+
+Verb Kaam CRUD Example
+GET Data padhna Read GET /api/students
+POST Naya data banana Create POST /api/students
+PUT Poora data update karna Update PUT /api/students/1
+PATCH Partial update Update PATCH /api/students/1
+DELETE Data delete karna Delete DELETE /api/students/1
+
+Har response ke saath Status Code bhi aata hai:
+
+Code Matlab
+200 OK Success
+201 Created Naya resource ban gaya
+204 No Content Success, par return karne ko kuch nahi
+400 Bad Request Client ne galat data bheja
+401 Unauthorized Login nahi hai
+403 Forbidden Login hai par permission nahi
+404 Not Found Resource nahi mila
+500 Internal Server Error Server me bug 4. RESTful API kya hai?
+
+REST = Representational State Transfer.
+
+Ye ek architectural style (guidelines ka set) hai. Ye koi technology ya library nahi hai. Jab hum Web API ko in rules ke hisaab se banate hain, to use RESTful API bolte hain.
+
+Web API aur REST ka relation:
+
+Web API = jo cheez hum banate hain (implementation)
+REST = jis style/rules se banate hain (guidelines)
+REST ke 6 main principles
+Client-Server separation: Frontend aur backend alag alag hote hain.
+Stateless: Server pichli request yaad nahi rakhta. Har request me poori info honi chahiye (jaise JWT token).
+Uniform Interface: Resource ke liye consistent URL aur HTTP verbs.
+Cacheable: Responses cache ho sakte hain (performance ke liye).
+Layered System: Beech me load balancer, proxy, gateway ho sakta hai.
+Resources identified by URL: Har cheez ek resource hai.
+RESTful URL design
+
+❌ Galat (verb URL me):
+
+GET /api/getAllStudents
+POST /api/createStudent
+POST /api/deleteStudent
+
+✅ Sahi (noun URL me, verb HTTP method me):
+
+GET /api/students → sab students
+GET /api/students/5 → ek student
+POST /api/students → naya student
+PUT /api/students/5 → update
+DELETE /api/students/5 → delete 5. MVC vs Web API: Difference kya hai?
+
+Ye sabse important confusion hai.
+
+MVC kya hai?
+
+Model-View-Controller. Isme server HTML page (View) banakar bhejta hai.
+
+Browser ──► Controller ──► Model (DB) ──► View (HTML) ──► Browser
+Web API kya hai?
+
+Isme View hota hi nahi. Sirf data (JSON/XML) return hota hai.
+
+Any Client ──► Controller ──► Model (DB) ──► JSON ──► Client
+Comparison table
+Point MVC Web API
+Return karta hai HTML View JSON / XML data
+View Hota hai (Razor) Nahi hota
+Clients Sirf browser Browser, mobile, IoT, desktop, sab
+Use case Website banana Service/backend banana
+Controller base Controller ControllerBase
+Attribute Optional [ApiController]
+Content negotiation Kam use Core feature
+ASP.NET Core me dono ek jaise hi hain
+
+Purane ASP.NET Framework me MVC aur Web API alag alag frameworks the. ASP.NET Core me dono merge ho gaye hain aur same pipeline use karte hain. Farak bas ye hai ki controller kya return kar raha hai.
+
+6.  Code Example
+    csharp
+    [ApiController]
+    [Route("api/[controller]")]
+    public class StudentsController : ControllerBase
+    {
+    private static List<Student> students = new()
+    {
+    new Student { Id = 1, Name = "Sourabh", City = "Indore" },
+    new Student { Id = 2, Name = "Rahul", City = "Bhopal" }
+    };
+
+        // GET: api/students
+        [HttpGet]
+        public IActionResult GetAll()
+        {
+            return Ok(students);                    // 200 + JSON
+        }
+
+        // GET: api/students/1
+        [HttpGet("{id}")]
+        public IActionResult GetById(int id)
+        {
+            var student = students.FirstOrDefault(s => s.Id == id);
+            if (student == null) return NotFound(); // 404
+            return Ok(student);
+        }
+
+        // POST: api/students
+        [HttpPost]
+        public IActionResult Create(Student student)
+        {
+            students.Add(student);
+            return CreatedAtAction(nameof(GetById), new { id = student.Id }, student); // 201
+        }
+
+        // PUT: api/students/1
+        [HttpPut("{id}")]
+        public IActionResult Update(int id, Student updated)
+        {
+            var student = students.FirstOrDefault(s => s.Id == id);
+            if (student == null) return NotFound();
+            student.Name = updated.Name;
+            student.City = updated.City;
+            return NoContent();                     // 204
+        }
+
+        // DELETE: api/students/1
+        [HttpDelete("{id}")]
+        public IActionResult Delete(int id)
+        {
+            var student = students.FirstOrDefault(s => s.Id == id);
+            if (student == null) return NotFound();
+            students.Remove(student);
+            return NoContent();
+        }
+
+    }
+
+Important cheezein:
+
+[ApiController]: automatic model validation, binding, aur 400 responses deta hai
+[Route("api/[controller]")]: URL api/students ban jata hai
+ControllerBase: View support ke bina lightweight base class
+Ok(), NotFound(), CreatedAtAction(): ye sab status code ke saath response bhejte hain 7. Web API kyun use karte hain?
+Platform independent: .NET API ko Java, Python, JS, Swift, koi bhi client call kar sakta hai.
+Multiple clients, ek backend: Code duplicate nahi hota.
+Frontend/Backend separation: Teams alag kaam kar sakti hain (React team aur .NET team).
+Scalability: Backend ko alag scale kar sakte ho (Docker, load balancer, cloud).
+Third-party integration: Payment gateway, SMS, maps, sab APIs se hi judte hain.
+Microservices: Bade system ko chhote chhote API services me tod sakte ho.
+Security centralized: Auth (JWT), validation, rate limiting ek hi jagah. 8. Request ka poora flow
+
+1. Client (Mobile) ──► GET https://myapp.com/api/students/1
+   Headers: Authorization: Bearer <JWT>
+2. Middleware pipeline (HTTPS, Auth, CORS, Routing)
+3. Controller action execute
+4. Service/Repository ──► Database query
+5. Data milta hai ──► C# object
+6. JSON me serialize hota hai
+7. Response: 200 OK + { "id":1, "name":"Sourabh" }
+
+Agar apne ko alg client tk data ko pauchna hi to apne webapi ka used krege alg alg client mtlb
+
+agar kissi ko data desktop pr chiye ya mobile papplication ppr chiye to apne waha pr webapi ka concept used krenge....
+
+WebApi is an application programming interface (API) that is used to enable communication or interaction with software componenets with each other.
+
+agar maan loi apne webapi ke through aadil ka data insert kiya hi
+
+to whi desktop appplication wle ke pass bhi chiye ur mobile applications wle client ke pass bhi aadil ka data jana chiye ....
+
+Webapi is the enhanced form of the web applications.
+
+Webapi is a set of endpoints that alllow different software applications to communicate with each other over the internet.
+
+ASP.net core webapi is a framework developed by microsoft that allows you to build and create RESTful APIs using ASP.NET Core Platform.
+
+It is similar to asp.net mvc since it contains the mvc features
+
+Webapi me koi view nhi rehta hi bus apne usko hit krte hi and wo apne kucch data return krke deta hi ....
+
+REST architectural Pattern specifies a set of constraints that a system adhere to .
+
+1. Uniform Interface
+2. Client Server
+3. Stateless
+4. Cacheable
+
+# Create & Understand ASP.NET Core Web API Project Template....
+ 

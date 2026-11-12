@@ -1,0 +1,70 @@
+﻿@model SchoolViewModel
+
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center mb-4">
+    <h1 class="display-4">Welcome</h1>
+    <p>This is the Index Action Method of Home Controller.</p>
+</div>
+
+<hr />
+
+<h2>Student Details</h2>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Name</th>
+            <th>Gender</th>
+            <th>Standard</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @foreach (var item in Model.myStudents)
+        {
+            <tr>
+                <td>@item.Id</td>
+                <td>@item.Name</td>
+                <td>@item.Gender</td>
+                <td>@item.Standard</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<hr />
+
+<h2>Teacher Details</h2>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Gender</th>
+            <th>Subject</th>
+            <th>Experience</th>
+            <th>Salary</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @foreach (var item in Model.myTeachers)
+        {
+            <tr>
+                <td>@item.Id</td>
+                <td>@item.Name</td>
+                <td>@item.Email</td>
+                <td>@item.Gender</td>
+                <td>@item.Subject</td>
+                <td>@item.Experience Years</td>
+                <td>@item.Salary</td>
+            </tr>
+        }
+    </tbody>
+</table>

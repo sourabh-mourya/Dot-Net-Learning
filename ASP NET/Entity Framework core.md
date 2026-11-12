@@ -1515,7 +1515,7 @@ Packages install karne ke baad **Scaffold command** run karte hain.
 ### MySQL ke liye command
 
 ```bash
-dotnet ef dbcontext scaffold "Server=localhost;Port=3306;Database=CodeFirstApproach;User=root;Password=root;" Pomelo.EntityFrameworkCore.MySql -o Models -c ApplicationDBContext --context-dir Data --force
+dotnet ef dbcontext scaffold "Server=localhost;Port=3306;Database=loginformaspnetcore;User=root;Password=root;" Pomelo.EntityFrameworkCore.MySql -o Models -c ApplicationDBContext --context-dir Data --force
 ```
 
 ### SQL Server ke liye command
@@ -1635,7 +1635,7 @@ public partial class ApplicationDBContext : DbContext
 **Answer: Wahi scaffold command dubara chalani hai.**
 
 ```bash
-dotnet ef dbcontext scaffold "Server=localhost;Port=3306;Database=CodeFirstApproach;User=root;Password=root;" Pomelo.EntityFrameworkCore.MySql -o Models -c ApplicationDBContext --context-dir Data --force
+dotnet ef dbcontext scaffold "Server=localhost;Port=3306;Database=loginformaspnetcoremvc;User=root;Password=root;" Pomelo.EntityFrameworkCore.MySql -o Models -c ApplicationDBContext --context-dir Data --force
 ```
 
 `--force` ki wajah se purani files **overwrite** ho jati hain aur nayi table/column ke hisaab se model aur DbContext **update** ho jate hain.

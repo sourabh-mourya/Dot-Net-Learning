@@ -1,0 +1,14 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+@using Microsoft.AspNetCore.Http
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor accessor //issi ki help me session ko directly view ke ander access krunga...
+//IHttpContextAccessor isko apne program.cs file me register krna hoga 
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>These is index action method of Home Controller here we used HttpContextAnncessor Method to used session directly in the view.</p>
+
+    <h3>@accessor.HttpContext.Session.GetString("MyKey")</h3>
+
+</div>
