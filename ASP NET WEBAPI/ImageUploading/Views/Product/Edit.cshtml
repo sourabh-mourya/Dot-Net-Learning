@@ -1,0 +1,69 @@
+@model ImageUploading.Models.ProductViewModel
+
+@{
+    ViewData["Title"] = "Edit Product";
+    string? currentImage = ViewBag.ImagePath as string;
+}
+
+<h1>Edit Product</h1>
+<hr />
+
+@if (TempData["Size_Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Size_Error"]</div>
+}
+@if (TempData["Ext_Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Ext_Error"]</div>
+}
+
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit" method="post" enctype="multipart/form-data">
+
+            <input type="hidden" asp-for="Id" />
+
+            <div class="form-group mb-3">
+                <label asp-for="Name" class="control-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="Price" class="control-label"></label>
+                <input asp-for="Price" class="form-control" />
+                <span asp-validation-for="Price" class="text-danger"></span>
+            </div>
+
+            <div class="form-group mb-3">
+                <label class="control-label d-block">Current Image</label>
+                @if (!string.IsNullOrEmpty(currentImage))
+                {
+                    <img src="~/images/@currentImage" alt="@Model.Name"
+                         style="width:120px; height:120px; object-fit:cover;" />
+                }
+                else
+                {
+                    <span class="text-muted">No image</span>
+                }
+            </div>
+
+            <div class="form-group mb-3">
+                <label asp-for="photo" class="control-label">New Image</label>
+                <input asp-for="photo" type="file" class="form-control" accept="image/*" />
+                <span asp-validation-for="photo" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <input type="submit" value="Update" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

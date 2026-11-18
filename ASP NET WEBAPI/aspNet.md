@@ -5109,6 +5109,1068 @@ First part me apne ye kr liya tha
 >
 > like code pura complete kr liya hi CRUDAppUsingASPCoreWebAPIMVC iss folder me hi to dekh controller wla folder khol ke .....
 
-
-
 ## Authenenticaiton and authorization ,Jwt ka code likhege ab apne ....
+
+# Identity Framework In ASP.NET Core
+
+web application ----> SignUp ----> Login
+-Profile
+-Forgot Password
+-Roles
+-External Login
+-Two Factor Authentication
+
+                                ye saaare kaam apne identity framework se bhi kr skte hi ...
+
+                                apne ko ui bane ki bhi jaurat nhi hi ye sb kaam auto matic krke de dega....
+
+-Asp.Net core identitiy is a built in membership system.
+-It is used to create, Read,Update and Delete user accounts.
+-Account Information
+-Authentication & Authorizations
+-Password recovery
+-Two factor authentication with SMS
+-It supports External login providers like Microsoft,Facebook,Google,Gmail etc.
+-Asp.Net Core Provides identity membership system that enable us to add login functionality to our applications.
+mtlb puri functionality provide krta hi jisse ki apne login functionality ko
+
+apne bina indetity framework se bhi login and singup functionality ko bana skte hi but wha pr apne ko hi code pura likhna hoga....
+
+It is an API that supports user interface (UI) to support Login and singup functionality...
+
+Identity framework user ko manage krta hi , password , profile data, roles,token , email confirmation in sb ko manage krleta hi easily se...
+
+# Identity Framework in ASP.NET Core
+
+## 1. Identity Framework kya hai?
+
+ASP.NET Core Identity ek **built-in membership system** hai. Matlab login se related saara kaam (user banana, login karwana, password manage karna, roles dena) ye apne aap handle kar deta hai.
+
+Normally ek web application me ye features chahiye hote hain:
+
+```
+Web Application  ---->  SignUp  ---->  Login
+                         |
+                         |-- Profile
+                         |-- Forgot Password
+                         |-- Roles
+                         |-- External Login (Google, Facebook...)
+                         |-- Two Factor Authentication (2FA)
+```
+
+Ye saare kaam hum **Identity Framework** se kar sakte hain. Bahut baar to hume **UI bhi nahi banana padta**, kyunki Identity ready-made UI pages (Login, Register, etc.) bhi generate karke de deta hai.
+
+---
+
+## 2. Identity Framework kya-kya karta hai?
+
+| Feature                       | Simple Explanation                                               |
+| ----------------------------- | ---------------------------------------------------------------- |
+| **CRUD on users**             | User account Create, Read, Update, Delete kar sakte hain         |
+| **Account information**       | Username, email, phone number, etc. store karta hai              |
+| **Authentication**            | Check karta hai ki _"tum kaun ho?"_ (login verify karna)         |
+| **Authorization**             | Check karta hai ki _"tum kya kar sakte ho?"_ (roles/permissions) |
+| **Password recovery**         | Forgot password / reset password flow                            |
+| **Two Factor Authentication** | Password ke baad SMS/OTP se extra verification                   |
+| **External login**            | Google, Microsoft, Facebook se login                             |
+| **Email confirmation**        | Email verify karwana                                             |
+| **Token management**          | Security tokens manage karta hai                                 |
+
+---
+
+## 3. Authentication vs Authorization (important!)
+
+- **Authentication** = Tum kaun ho? (Login)
+- **Authorization** = Tum kya access kar sakte ho? (Role: Admin / User)
+
+> Example: Office me ID card dikhake andar jaana = Authentication. Manager ke cabin me jaa sakte ho ya nahi = Authorization.
+
+---
+
+## 4. Identity ke bina bhi login bana sakte hain?
+
+Haan, bilkul bana sakte hain. Lekin phir:
+
+- Password hashing khud likhni padegi
+- Login/Signup ka poora code khud likhna padega
+- Roles, tokens, email confirmation sab khud handle karna padega
+
+**Identity Framework use karne se ye sab ready-made mil jata hai**, isliye time bhi bachta hai aur security bhi better hoti hai.
+
+---
+
+## 5. Identity ek API bhi hai
+
+Identity ek **API** hai jo **UI ko support** karta hai Login aur Signup functionality ke liye. Ye internally ye cheezein manage karta hai:
+
+- Passwords (hashed form me)
+- Profile data
+- Roles
+- Tokens
+- Email confirmation
+
+---
+
+## 6. Basic Setup (Quick Look)
+
+**Step 1:** NuGet package install karo
+
+```
+Microsoft.AspNetCore.Identity.EntityFrameworkCore
+```
+
+**Step 2:** `DbContext` ko `IdentityDbContext` se inherit karo
+
+```csharp
+public class AppDbContext : IdentityDbContext<IdentityUser>
+{
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+}
+```
+
+**Step 3:** `Program.cs` me Identity add karo
+
+```csharp
+builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+    .AddEntityFrameworkStores<AppDbContext>()
+    .AddDefaultTokenProviders();
+
+// pipeline me
+app.UseAuthentication();
+app.UseAuthorization();
+```
+
+**Step 4:** Migration chalao, aur Identity ki tables (`AspNetUsers`, `AspNetRoles`, etc.) database me ban jayengi.
+
+```
+Add-Migration InitialCreate
+Update-Database
+```
+
+---
+
+# Working with jQuery in ASP.NET Core
+
+## 1. jQuery kya hai?
+
+jQuery ek **JavaScript library** hai. Ye JavaScript programming ko **bahut simple** bana deti hai.
+
+Normal JavaScript me jo kaam 4-5 line me hota hai, jQuery me wo **1 line** me ho jata hai.
+
+**Plain JavaScript:**
+
+```javascript
+document.getElementById("btn").addEventListener("click", function () {
+  alert("Hello!");
+});
+```
+
+**jQuery:**
+
+```javascript
+$("#btn").click(function () {
+  alert("Hello!");
+});
+```
+
+---
+
+## 2. ASP.NET Core me jQuery ka use
+
+jQuery ko hum apne **`.cshtml`** (Razor view) file me use karte hain, taaki directly JavaScript likhkar HTML page ko easily control kar sakein.
+
+Matlab: apna JavaScript likho, aur HTML page easily run/handle ho jayega.
+
+**Example (`.cshtml` file me):**
+
+```html
+<button id="btn">Click Me</button>
+<p id="msg"></p>
+
+@section Scripts {
+<script>
+  $(document).ready(function () {
+    $("#btn").click(function () {
+      $("#msg").text("Button click hua!");
+    });
+  });
+</script>
+}
+```
+
+> ASP.NET Core ke default template me jQuery pehle se `wwwroot/lib/jquery` folder me included hota hai, aur `_Layout.cshtml` me link bhi hota hai.
+
+---
+
+## 3. jQuery ka basic syntax
+
+```javascript
+$(selector).action();
+```
+
+| Part       | Meaning                                                       |
+| ---------- | ------------------------------------------------------------- |
+| `$`        | jQuery ko call karne ka symbol                                |
+| `selector` | Kaun sa HTML element chahiye (`#id`, `.class`, `tag`)         |
+| `action()` | Us element par kya karna hai (click, hide, text change, etc.) |
+
+**Examples:**
+
+```javascript
+$("#myId").hide(); // id wale element ko hide karo
+$(".myClass").show(); // class wale elements ko show karo
+$("p").css("color", "red"); // saare <p> ka color red
+```
+
+---
+
+## Quick Summary
+
+- **Identity Framework** = Login, signup, roles, password, 2FA sab ka ready-made system
+- **jQuery** = JavaScript ko simple banane wali library, jo `.cshtml` pages me use hoti hai
+# Image Uploading and Retrieving in ASP.NET Core (MVC)
+
+Is guide me hum seekhenge ki **image ko local folder (`wwwroot/images`) me kaise save karte hain** aur **database me sirf uska path/file name store karte hain**. Saath me **validations** (size + extension), **Edit** aur **Delete** bhi cover kiya gaya hai.
+
+---
+
+## 1. Concept: Kaise kaam karta hai?
+
+> Database me image ki **binary file store nahi karte**. Image ko server ke **local folder** me save karte hain, aur DB me sirf **file ka naam (ya path)** rakhte hain.
+
+**Flow:**
+
+```
+User form me image choose karta hai
+        │
+        ▼
+Controller me IFormFile ke through image milti hai
+        │
+        ▼
+Validation (size ≤ 1MB, extension = png/jpg/jpeg)
+        │
+        ▼
+Image ko wwwroot/images/ folder me save karte hain (unique name ke saath)
+        │
+        ▼
+DB me sirf fileName (ImagePath) save hota hai
+        │
+        ▼
+Index page par <img src="~/images/fileName" /> se image dikhate hain
+```
+
+**Unique name kyun?**
+Agar do users same naam ki file (`photo.png`) upload karein to purani file overwrite ho jayegi. Isliye `Guid.NewGuid()` use karke unique naam banate hain.
+
+---
+
+## 2. Folder Structure
+
+```
+ImageUploading/
+│
+├── Controllers/
+│   └── ProductController.cs
+│
+├── Models/
+│   ├── Product.cs               ← Database entity
+│   └── ProductViewModel.cs      ← Form ke liye (IFormFile ke saath)
+│
+├── Views/
+│   └── Product/
+│       ├── Index.cshtml
+│       ├── Create.cshtml
+│       └── Edit.cshtml
+│
+└── wwwroot/
+    └── images/                  ← Yaha images save hongi
+```
+
+> ⚠️ `wwwroot/images` folder pehle se bana lena. (Code me bhi hum check karenge ki folder na ho to bana de.)
+
+---
+
+## 3. Models
+
+Yaha hum **do models** banate hain.
+
+### Kyun do models?
+
+`IFormFile` ek **file upload type** hai. Agar isko seedha database entity (`Product`) me daalenge to **Entity Framework error dega**, kyunki EF `IFormFile` ko database column me map nahi kar sakta.
+
+| Model | Kaam |
+|---|---|
+| `Product` | Database table se map hota hai. `ImagePath` (string) store karta hai. |
+| `ProductViewModel` | Form se data lene ke liye. `IFormFile` yaha use hota hai. |
+
+### `Product.cs` (Database Entity)
+
+```csharp
+using System;
+using System.Collections.Generic;
+
+namespace ImageUploading.Models;
+
+public partial class Product
+{
+    public int Id { get; set; }
+
+    public string Name { get; set; } = null!;
+
+    public decimal Price { get; set; }
+
+    public string? ImagePath { get; set; }   // sirf file ka naam DB me jayega
+}
+```
+
+### `ProductViewModel.cs` (Form Model)
+
+```csharp
+using System.ComponentModel.DataAnnotations;
+
+namespace ImageUploading.Models;
+
+public partial class ProductViewModel
+{
+    public int Id { get; set; }
+
+    [Required(ErrorMessage = "Name is required")]
+    public string Name { get; set; } = null!;
+
+    [Required(ErrorMessage = "Price is required")]
+    public decimal Price { get; set; }
+
+    public IFormFile? photo { get; set; }    // user ki upload ki hui image
+
+    public string? ImagePath { get; set; }   // Edit page par purani image dikhane ke liye
+}
+```
+
+---
+
+## 4. Controller Setup
+
+### `IWebHostEnvironment` kyun?
+
+Image ko local folder me save karna hai, to hume **server par `wwwroot` ka physical path** chahiye. Ye path `IWebHostEnvironment.WebRootPath` se milta hai.
+
+```csharp
+using ImageUploading.Models;
+using Microsoft.AspNetCore.Mvc;
+
+namespace ImageUploading.Controllers;
+
+public class ProductController : Controller
+{
+    private readonly ImageUploadingContext imageUploadingContext;
+    private readonly IWebHostEnvironment env;
+
+    // Allowed extensions
+    private readonly string[] allowedExtensions = { ".png", ".jpg", ".jpeg" };
+
+    // Max size = 1 MB (bytes me)
+    private const long MaxFileSize = 1 * 1024 * 1024;
+
+    public ProductController(ImageUploadingContext context, IWebHostEnvironment env)
+    {
+        this.imageUploadingContext = context;
+        this.env = env;
+    }
+
+    // ... actions neeche
+}
+```
+
+---
+
+## 5. Create (Image Upload)
+
+### GET: Form dikhana
+
+```csharp
+[HttpGet]
+public IActionResult Create()
+{
+    return View();
+}
+```
+
+### POST: Data + Image save karna
+
+```csharp
+[HttpPost]
+public IActionResult Create(ProductViewModel prod)
+{
+    // 1) Image select hui hai ya nahi
+    if (prod.photo == null)
+    {
+        ModelState.AddModelError("photo", "Please select an image.");
+    }
+    else
+    {
+        // 2) Validation (size + extension)
+        string? error = ValidateImage(prod.photo);
+        if (error != null)
+        {
+            ModelState.AddModelError("photo", error);
+        }
+    }
+
+    // 3) Koi bhi error ho to form wapas dikhao
+    if (!ModelState.IsValid)
+    {
+        return View(prod);
+    }
+
+    // 4) Image save karo
+    string fileName = SaveImage(prod.photo!);
+
+    // 5) Database me data save karo
+    Product p = new Product()
+    {
+        Name = prod.Name,
+        Price = prod.Price,
+        ImagePath = fileName
+    };
+
+    imageUploadingContext.Products.Add(p);
+    imageUploadingContext.SaveChanges();
+
+    TempData["Success"] = "Product added...";
+    return RedirectToAction("Index");
+}
+```
+
+### Helper method: `SaveImage()`
+
+```csharp
+private string SaveImage(IFormFile file)
+{
+    // wwwroot/images ka physical path
+    string folder = Path.Combine(env.WebRootPath, "images");
+
+    // Folder na ho to bana do
+    if (!Directory.Exists(folder))
+    {
+        Directory.CreateDirectory(folder);
+    }
+
+    // Unique file name = GUID + extension
+    string fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+
+    string filePath = Path.Combine(folder, fileName);
+
+    // using lagana zaruri hai, taaki FileStream close ho jaye
+    using (var stream = new FileStream(filePath, FileMode.Create))
+    {
+        file.CopyTo(stream);
+    }
+
+    return fileName;   // sirf naam return karte hain, DB me yahi save hoga
+}
+```
+
+### Code ka explanation
+
+| Line | Matlab |
+|---|---|
+| `env.WebRootPath` | `wwwroot` folder ka full path |
+| `Path.Combine(...)` | Folder + file name ko safely jodta hai |
+| `Guid.NewGuid()` | Har baar unique ID, taaki file overwrite na ho |
+| `Path.GetExtension(...)` | Original file ka extension (`.png`, `.jpg`) |
+| `file.CopyTo(stream)` | Uploaded image ko disk par copy karta hai |
+| `using (...)` | Kaam hone ke baad `FileStream` ko close/dispose kar deta hai |
+
+> 💡 **Improvement:** Aapke original code me `prod.photo.CopyTo(new FileStream(...))` tha. Isme `FileStream` close nahi hota, jisse file **locked** reh sakti hai (baad me delete/edit karte waqt error aata hai). Isliye `using` zaroor lagayein.
+
+> 💡 **Security tip:** Original `FileName` ko seedha use karne ki jagah sirf **extension** lena better hai. Kyunki user kuch bhi naam (jaise `../../abc.png`) bhej sakta hai.
+
+---
+
+## 6. Image Validations
+
+Humne 2 rules lagaye hain:
+
+1. Image **1 MB se kam** honi chahiye.
+2. Sirf **png, jpg, jpeg** allowed hain.
+
+### Helper method: `ValidateImage()`
+
+```csharp
+private string? ValidateImage(IFormFile file)
+{
+    // Rule 1: Size check (1 MB = 1024 * 1024 bytes)
+    if (file.Length > MaxFileSize)
+    {
+        return "Image size must be less than 1 MB.";
+    }
+
+    // Rule 2: Extension check
+    string extension = Path.GetExtension(file.FileName).ToLower();
+
+    if (!allowedExtensions.Contains(extension))
+    {
+        return "Only .png, .jpg and .jpeg images are allowed.";
+    }
+
+    return null;   // null matlab koi error nahi, image valid hai
+}
+```
+
+### Explanation
+
+| Cheez | Detail |
+|---|---|
+| `file.Length` | File ka size **bytes** me |
+| `1 * 1024 * 1024` | 1 MB = 1,048,576 bytes |
+| `.ToLower()` | `.PNG` aur `.png` dono ko same maanne ke liye |
+| `allowedExtensions.Contains(...)` | Check karta hai ki extension allowed list me hai ya nahi |
+| `ModelState.AddModelError("photo", ...)` | Error ko `photo` field ke saath jodta hai, jo view me `asp-validation-for="photo"` se dikhta hai |
+
+### Optional: Content-Type bhi check karna
+
+Sirf extension par bharosa nahi kar sakte (koi `virus.exe` ka naam `virus.png` kar sakta hai). Extra safety ke liye:
+
+```csharp
+string[] allowedContentTypes = { "image/png", "image/jpeg" };
+
+if (!allowedContentTypes.Contains(file.ContentType))
+{
+    return "Invalid image type.";
+}
+```
+
+---
+
+## 7. Index (Image Retrieve / Show)
+
+Retrieve karna matlab: DB se `ImagePath` lena aur `<img>` tag me `~/images/` ke saath lagana.
+
+```csharp
+public IActionResult Index()
+{
+    var products = imageUploadingContext.Products.ToList();
+    return View(products);
+}
+```
+
+> Image ka URL banta hai: `/images/<fileName>`
+> Kyunki `wwwroot` static files ka root hota hai, `~/images/abc.png` seedha accessible hai.
+
+---
+
+## 8. Edit
+
+### Logic
+
+- Edit page par **purani image** dikhegi.
+- User **nayi image choose kare** to: validate → purani delete → nayi save.
+- User **image choose na kare** to: purani image hi rahegi.
+
+### GET: Existing data load karna
+
+```csharp
+[HttpGet]
+public IActionResult Edit(int id)
+{
+    var product = imageUploadingContext.Products.Find(id);
+
+    if (product == null)
+    {
+        return NotFound();
+    }
+
+    ProductViewModel vm = new ProductViewModel()
+    {
+        Id = product.Id,
+        Name = product.Name,
+        Price = product.Price,
+        ImagePath = product.ImagePath
+    };
+
+    return View(vm);
+}
+```
+
+### POST: Update karna
+
+```csharp
+[HttpPost]
+public IActionResult Edit(ProductViewModel prod)
+{
+    var product = imageUploadingContext.Products.Find(prod.Id);
+
+    if (product == null)
+    {
+        return NotFound();
+    }
+
+    // Nayi image aayi hai to validate karo
+    if (prod.photo != null)
+    {
+        string? error = ValidateImage(prod.photo);
+        if (error != null)
+        {
+            ModelState.AddModelError("photo", error);
+        }
+    }
+
+    if (!ModelState.IsValid)
+    {
+        prod.ImagePath = product.ImagePath;   // view me purani image dikhane ke liye
+        return View(prod);
+    }
+
+    // Nayi image aayi hai to: purani delete + nayi save
+    if (prod.photo != null)
+    {
+        DeleteImage(product.ImagePath);               // purani file delete
+        product.ImagePath = SaveImage(prod.photo);    // nayi file save
+    }
+
+    product.Name = prod.Name;
+    product.Price = prod.Price;
+
+    imageUploadingContext.SaveChanges();
+
+    TempData["Success"] = "Product updated...";
+    return RedirectToAction("Index");
+}
+```
+
+### Helper method: `DeleteImage()`
+
+```csharp
+private void DeleteImage(string? fileName)
+{
+    if (string.IsNullOrEmpty(fileName)) return;
+
+    string filePath = Path.Combine(env.WebRootPath, "images", fileName);
+
+    if (System.IO.File.Exists(filePath))
+    {
+        System.IO.File.Delete(filePath);
+    }
+}
+```
+
+> 💡 Controller me `File` naam ka ek method (`Controller.File()`) pehle se hota hai, isliye `System.IO.File` poora likhna padta hai.
+
+---
+
+## 9. Delete
+
+Delete me **do cheezein** delete honi chahiye:
+
+1. Database ka record
+2. Folder me padi hui image file
+
+> Agar sirf DB record delete karoge to image file folder me **bekar padi rahegi**.
+
+```csharp
+[HttpPost]
+public IActionResult Delete(int id)
+{
+    var product = imageUploadingContext.Products.Find(id);
+
+    if (product == null)
+    {
+        return NotFound();
+    }
+
+    // 1) Folder se image delete
+    DeleteImage(product.ImagePath);
+
+    // 2) Database se record delete
+    imageUploadingContext.Products.Remove(product);
+    imageUploadingContext.SaveChanges();
+
+    TempData["Success"] = "Product deleted...";
+    return RedirectToAction("Index");
+}
+```
+
+> ✅ Delete ke liye `[HttpPost]` use karna better hai (GET se delete karna unsafe hota hai).
+
+---
+
+## 10. Views (Razor)
+
+### `Create.cshtml`
+
+```html
+@model ImageUploading.Models.ProductViewModel
+
+<h2>Add Product</h2>
+
+<form asp-action="Create" method="post" enctype="multipart/form-data">
+
+    <div class="mb-3">
+        <label asp-for="Name"></label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Price"></label>
+        <input asp-for="Price" class="form-control" />
+        <span asp-validation-for="Price" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="photo"></label>
+        <input asp-for="photo" type="file" class="form-control" accept=".png,.jpg,.jpeg" />
+        <span asp-validation-for="photo" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Save</button>
+</form>
+```
+
+> ⚠️ **`enctype="multipart/form-data"` compulsory hai.** Iske bina file controller tak pahunchegi hi nahi, `photo` hamesha `null` aayega.
+
+> `accept=".png,.jpg,.jpeg"` sirf browser level par filter karta hai. Ye **security nahi** hai, isliye server side validation (`ValidateImage`) zaroori hai.
+
+### `Index.cshtml`
+
+```html
+@model IEnumerable<ImageUploading.Models.Product>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+<a asp-action="Create" class="btn btn-primary mb-3">Add Product</a>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Image</th>
+            <th>Name</th>
+            <th>Price</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>
+                <img src="~/images/@item.ImagePath" width="80" height="80" alt="@item.Name" />
+            </td>
+            <td>@item.Name</td>
+            <td>@item.Price</td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm">Edit</a>
+
+                <form asp-action="Delete" asp-route-id="@item.Id" method="post"
+                      style="display:inline"
+                      onsubmit="return confirm('Are you sure you want to delete?');">
+                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                </form>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
+```
+
+### `Edit.cshtml`
+
+```html
+@model ImageUploading.Models.ProductViewModel
+
+<h2>Edit Product</h2>
+
+<form asp-action="Edit" method="post" enctype="multipart/form-data">
+
+    <input type="hidden" asp-for="Id" />
+
+    <div class="mb-3">
+        <label asp-for="Name"></label>
+        <input asp-for="Name" class="form-control" />
+        <span asp-validation-for="Name" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Price"></label>
+        <input asp-for="Price" class="form-control" />
+        <span asp-validation-for="Price" class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label>Current Image</label><br />
+        <img src="~/images/@Model.ImagePath" width="120" />
+    </div>
+
+    <div class="mb-3">
+        <label>Change Image (optional)</label>
+        <input asp-for="photo" type="file" class="form-control" accept=".png,.jpg,.jpeg" />
+        <span asp-validation-for="photo" class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-success">Update</button>
+</form>
+```
+
+---
+
+
+# Microservices in ASP.NET Core
+
+## 1. Microservices kya hai?
+
+Microservices ek **architectural style** hai jisme ek badi application ko **chhoti-chhoti independent services** me divide kar diya jata hai. Har service ek **specific business function** ke liye responsible hoti hai.
+
+Jab multiple services hoti hain, to unko aapas me communicate karne ke liye hum **APIs** ka use karte hain.
+
+---
+
+## 2. Monolithic Architecture me problems
+
+Monolithic me poori application ek hi project me hoti hai. Isme ye problems aati hain:
+
+- Application badi hone par **maintain karna mushkil** ho jata hai.
+- Deployment poori application ko affect karta hai.
+- Ek module ko scale karna ho to **poori application ko scale** karna padta hai.
+- Ek module ka bug **poore system ko impact** kar sakta hai.
+
+---
+
+## 3. Microservices Architecture
+
+Isme har module ko alag-alag service me divide kar diya jata hai, aur har service par alag team kaam kar sakti hai.
+
+**Har service:**
+
+- Apna **khud ka database** rakh sakti hai (ye zaroori nahi hai, lekin generally har service ka alag DB hota hai).
+- **Independently deploy** ho sakti hai.
+- Alag-alag **teams** develop kar sakti hain.
+
+Har service dusri service se **APIs ke through** communicate karti hai.
+
+```
+        +------------------+                +------------------+
+        |  Order Service   |  --- HTTP -->  |  Product Service |
+        |  (localhost:xxxx)|  <-- JSON ---  |  (localhost:5235)|
+        +------------------+                +------------------+
+              |                                      |
+          Order DB                              Product DB
+```
+
+---
+
+## 4. ASP.NET Core microservices ke liye kyun?
+
+ASP.NET Core microservices banane ke liye bahut popular framework hai, kyunki isme milta hai:
+
+- **High performance**
+- **Cross-platform** support (Windows, Linux, macOS)
+- **Built-in Dependency Injection**
+- REST API development ka easy support
+
+---
+
+## 5. Practical: 2 Microservices banayenge
+
+| Service | Kaam |
+|---|---|
+| **Product Service** | Product ki information return karti hai |
+| **Order Service** | Order create karti hai aur Product Service ko call karti hai |
+
+---
+
+## 6. Step 1: Product Service banao
+
+1. Ek naya **Web API project** create karo (`ProductServices`).
+2. Usme `Product` model banao.
+3. `ProductController` banao, jo products ki list return kare.
+
+**Models/Product.cs**
+
+```csharp
+namespace ProductServices.Models
+{
+    public class Product
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = null!;
+        public decimal Price { get; set; }
+    }
+}
+```
+
+**Controllers/ProductController.cs**
+
+```csharp
+using Microsoft.AspNetCore.Mvc;
+using ProductServices.Models;
+
+namespace ProductServices.Controllers
+{
+    [Route("api/[Controller]")]
+    [ApiController]
+    public class ProductController : ControllerBase
+    {
+        [HttpGet]
+        public IActionResult GetProduct()
+        {
+            // Abhi database use nahi kar rahe, simple hardcoded data rakha hai
+            var products = new List<Product>()
+            {
+                new Product { Id = 1, Name = "Laptop", Price = 50000 },
+                new Product { Id = 2, Name = "Smartphone", Price = 25000 },
+                new Product { Id = 3, Name = "Headphones", Price = 2000 },
+                new Product { Id = 4, Name = "Keyboard", Price = 1500 },
+                new Product { Id = 5, Name = "Mouse", Price = 800 },
+                new Product { Id = 6, Name = "Monitor", Price = 12000 },
+                new Product { Id = 7, Name = "Smart Watch", Price = 5000 },
+                new Product { Id = 8, Name = "Tablet", Price = 18000 }
+            };
+
+            return Ok(products);
+        }
+    }
+}
+```
+
+Is service ko run karo. Maan lo ye `http://localhost:5235` par chal rahi hai.
+
+---
+
+## 7. Step 2: Order Service banao
+
+1. Usi solution me ek **aur Web API project** banao (`OrderServices`).
+2. Usme `Order` model banao.
+3. `OrderController` banao jo Product Service ko call kare.
+
+---
+
+## 8. Step 3: HttpClient register karo
+
+Order Service ki `Program.cs` me `HttpClient` register karna padta hai. Isi ki help se hum dusri service ki API call karenge.
+
+```csharp
+builder.Services.AddHttpClient();
+```
+
+---
+
+## 9. Step 4: OrderController banao
+
+```csharp
+using System.Text.Json;
+using Microsoft.AspNetCore.Mvc;
+
+namespace OrderServices.Controllers
+{
+    [Route("api/[Controller]")]
+    [ApiController]
+    public class OrderController : ControllerBase
+    {
+        private readonly HttpClient _httpClient; // isi ki help se API call hogi
+
+        public OrderController(IHttpClientFactory factory)
+        {
+            // Factory se HttpClient initialize kiya, ab isse direct API call kar sakte hain
+            _httpClient = factory.CreateClient();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetOrder()
+        {
+            // Product Service ki API ko call karna (wahi URL jisse products get kiye the)
+            var products = await _httpClient.GetFromJsonAsync<JsonElement>("http://localhost:5235/api/Product");
+
+            return Ok(new
+            {
+                Message = "Orders Data Fetch Successfully",
+                data = products
+            });
+        }
+    }
+}
+```
+
+**Flow:** Jab `OrderService` ke `GetOrder` action ka URL hit hoga, tab wo Product Service me jaakar products le aayega.
+
+---
+
+## 10. `GetStringAsync` vs `GetFromJsonAsync`
+
+Ye ek common galti hai, isliye dhyan se samjho.
+
+### Galat: `GetStringAsync`
+
+```csharp
+var products = await _httpClient.GetStringAsync("http://localhost:5235/api/Product");
+```
+
+Ye response ko **string** me deta hai. Jab isko `Ok(...)` me daalte ho, to JSON ke quotes escape ho jate hain:
+
+```json
+{
+  "message": "Orders Data Fetch Successfully",
+  "data": "[{\"id\":1,\"name\":\"Laptop\"}]"
+}
+```
+
+### Sahi: `GetFromJsonAsync<JsonElement>`
+
+```csharp
+var products = await _httpClient.GetFromJsonAsync<JsonElement>("http://localhost:5235/api/Product");
+```
+
+Ye proper JSON deta hai, aur **kisi class (DTO) ki zarurat nahi** hoti:
+
+```json
+{
+  "message": "Orders Data Fetch Successfully",
+  "data": [
+    { "id": 1, "name": "Laptop", "price": 50000 },
+    { "id": 2, "name": "Smartphone", "price": 25000 }
+  ]
+}
+```
+
+| Method | Return type | JSON proper aata hai? |
+|---|---|---|
+| `GetStringAsync(url)` | `string` | Nahi (escaped string) |
+| `GetFromJsonAsync<JsonElement>(url)` | `JsonElement` | Haan, bina class ke |
+| `GetFromJsonAsync<List<ProductDto>>(url)` | `List<ProductDto>` | Haan, lekin DTO class banani padti hai |
+
+> **Note:** `GetFromJsonAsync<List>` aise akela nahi likh sakte. `List` generic hai, to type batana padta hai, jaise `List<ProductDto>`.
+
+---
+
+## 11. Microservices ke Advantages
+
+- Easy to **maintain**
+- **Independent deployment**
+- Better **scalability**
+- **Faster development**
+
+---
+
+## 12. Microservices kab use karein?
+
+**Use karo jab:**
+
+- Application **badi** ho.
+- **Multiple teams** us par kaam kar rahi hon.
+- Alag modules ko **independently deploy** karna ho.
+- **High scalability** chahiye.
+
+**Mat use karo jab:**
+
+- Project chhota ho. Chhote projects ke liye normal **ASP.NET Core Web API (Monolithic)** simple aur better hota hai.
+
+---                                                                   
+
+
+
+
+
+
+## ab caching wla concept caching.md file   

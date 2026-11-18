@@ -1,0 +1,6 @@
+@Distrubute_Caching_Redis__HostAddress = http://localhost:5071
+
+GET {{Distrubute_Caching_Redis__HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
